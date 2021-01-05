@@ -1,0 +1,49 @@
+# Get the Data
+
+# Read in with tidytuesdayR package 
+# Install from CRAN via: install.packages("tidytuesdayR")
+# This loads the readme and all the datasets for the week of interest
+
+library(tidytuesdayR)
+library(tidyverse)
+
+tuesdata <- tidytuesdayR::tt_load('2021-01-05')
+tuesdata <- tidytuesdayR::tt_load(2021, week = 2)
+
+transit_cost <- tuesdata$transit_cost
+
+# Or read in the data manually
+
+#transit_cost <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-01-05/transit_cost.csv')
+
+#make needed columns numeric
+transit <- transit_cost %>% mutate(start_year = as.numeric(start_year),
+                   end_year   = as.numeric(end_year),
+                   real_cost  = as.numeric(real_cost))
+
+#remove data that does not have country, start_year, and end_year
+transit <- transit %>% drop_na(country, rr, end_year, start_year)
+transit$cfull <- countrycode(transit$country, "iso2c", "country.name" )
+transit$cfull[is.na(transit$cfull)] <- "United Kingdom"
+transit$continent <- countrycode(sourcevar = transit$cfull,
+                             origin = "country.name",
+                             destination = "continent")
+#filter for rails
+df <- transit %>% filter(rr == 1)
+
+df %>% ggplot(aes(x = reorder(line, end_year), y = end_year, color = cost_km_millions, na.rm = TRUE)) + geom_linerange(aes(ymin = start_year, ymax = end_year), size = 2) + coord_flip() + scale_y_continuous(limits = c(1982, 2030), name = "Year") +
+    facet_grid(fct_infreq(cfull) ~ ., 
+               scales = "free_y", space = "free_y", switch = "y") +   labs(
+                   title = "Rail Development by Country",
+                   subtitle = "Duration of project and total cost",
+                   caption = '#TidyTuesday Data: transitcosts.com'
+               )+
+    theme_classic() +
+    theme(axis.title.y =element_blank(),
+        axis.title.x.bottom = element_text(hjust = 0),
+        axis.ticks = element_line(colour = "black"),
+        strip.placement = "outside",
+        strip.text.y.left = element_text(angle = 0, hjust = 1),
+        strip.background = element_blank(),
+        plot.title = element_text(family = "Roboto", face = "bold")
+    )+ scale_color_gradientn(colours = rainbow(5), trans = "log10", name = "Cost per km \n(USD millions)")
