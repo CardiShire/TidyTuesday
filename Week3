@@ -1,0 +1,35 @@
+# Get the Data
+
+# Read in with tidytuesdayR package 
+# Install from CRAN via: install.packages("tidytuesdayR")
+# This loads the readme and all the datasets for the week of interest
+
+# Either ISO-8601 date or year/week works!
+
+tuesdata <- tidytuesdayR::tt_load('2021-01-12')
+tuesdata <- tidytuesdayR::tt_load(2021, week = 3)
+
+artwork <- tuesdata$artwork
+artists <- tuesdata$artists
+
+artwork$timesince <- artwork$acquisitionYear - artwork$year
+
+artistcount <- artwork %>% 
+     filter(!is.na(artist)) %>% 
+     group_by(artist) %>% 
+     count()
+     
+totalart <- left_join(artwork, artistcount)
+
+library(tidyverse)
+library(hexbin)
+
+my_breaks <- c(20, 400, 8000)
+
+totalart %>% filter(n > 100) %>% ggplot(aes(x = timesince, y = year)) + 
+  stat_binhex() + theme_classic() + scale_fill_gradient(name = "Count", 
+  trans = "log", breaks = my_breaks, labels = my_breaks, low = "grey", 
+  high = "blue" ) + labs(title = "Tate Art Museum", 
+  subtitle = "The demostration of time between creation and acquistion.", 
+  caption = "#TidyTuesday Data: The Tate Collection Graph: @alliesherier") + 
+  ylab("Year of Creation") + xlab("Years Between Acquisition and Creation")
