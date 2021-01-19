@@ -1,6 +1,7 @@
 #Thankful for this tutorial: https://rpubs.com/spoonerf/countrymapggplot2
 library(tidyverse)
 library(rKenyaCensus)
+library(maptools)
 
 # create a markdown table for the readme
 rKenyaCensus::DataCatalogue %>% 
@@ -56,5 +57,5 @@ ggplot() +
     color = "black", size = 0.25) + theme_opts +
   theme(aspect.ratio=1) + scale_fill_distiller(
     name="% of births in \nhealthcare facilities", 
-    palette = "BuPu", breaks = pretty_breaks(n = 5))+
+    palette = "BuPu")+
   labs(title="Kenya Births", subtitle = "Babies born in health care facilities by region.")
