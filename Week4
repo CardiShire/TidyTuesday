@@ -2,6 +2,7 @@
 library(tidyverse)
 library(rKenyaCensus)
 library(maptools)
+library(raster)
 
 # create a markdown table for the readme
 rKenyaCensus::DataCatalogue %>% 
