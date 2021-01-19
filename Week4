@@ -29,7 +29,7 @@ births5yr$County <- str_to_title(births5yr$County, locale = "en")
 births5yrcounty <- births5yr[4:50,]
 #Joining data based on county/region
 df <- left_join(births5yrcounty, County)
-#Adding a specifc id to the regions of Kenya
+#Adding a specific id to the regions of Kenya
 Kenya1_UTM@data$id <- rownames(Kenya1_UTM@data)
 
 Kenya1_UTM@data <- full_join(Kenya1_UTM@data, df, by=c("NAME_1" = "County"))
