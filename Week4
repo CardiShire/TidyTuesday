@@ -1,0 +1,60 @@
+#Thankful for this tutorial: https://rpubs.com/spoonerf/countrymapggplot2
+library(tidyverse)
+library(rKenyaCensus)
+
+# create a markdown table for the readme
+rKenyaCensus::DataCatalogue %>% 
+  knitr::kable()
+
+#data for births
+births5yr <- rKenyaCensus::V4_T2.38
+
+#outline of Kenya
+Kenya<-getData("GADM", country="KE", level=0)
+#outline of Kenya's regional boundaries
+Kenya1<-getData("GADM", country="KE", level=1)
+#Find UTM code at: http://www.dmap.co.uk/utmworld.htm
+#UTM 37S for Kenya
+#EPSG can be found: http://spatialreference.org/
+Kenya1_UTM<-spTransform(Kenya1, CRS("+init=EPSG:32737"))
+#Make list of region names in Kenya
+County<- Kenya1_UTM@data$NAME_1
+County <- as.data.frame(County)
+
+#change capitalization of counties
+births5yr$County <- str_to_title(births5yr$County, locale = "en")
+#remove first three rows to just have counties
+births5yrcounty <- births5yr[4:50,]
+#Joining data based on county/region
+df <- left_join(births5yrcounty, County)
+#Adding a specifc id to the regions of Kenya
+Kenya1_UTM@data$id <- rownames(Kenya1_UTM@data)
+
+Kenya1_UTM@data <- full_join(Kenya1_UTM@data, df, by=c("NAME_1" = "County"))
+#Regions defined for each Polygons
+Kenya1_df <- fortify(Kenya1_UTM)
+Kenya1_df <- full_join(Kenya1_df,Kenya1_UTM@data, by="id")
+
+#custom theme
+theme_opts<-list(theme(panel.grid.minor = element_blank(),
+                       panel.grid.major = element_blank(),
+                       panel.background = element_blank(),
+                       plot.background = element_blank(),
+                       axis.line = element_blank(),
+                       axis.text.x = element_blank(),
+                       axis.text.y = element_blank(),
+                       axis.ticks = element_blank(),
+                       axis.title.x = element_blank(),
+                       axis.title.y = element_blank()))
+
+
+ggplot() + 
+  geom_polygon(
+    data = Kenya1_df, aes(
+      x = long, y = lat, group = group, 
+      fill = Percent_in_HealthFacility ), 
+    color = "black", size = 0.25) + theme_opts +
+  theme(aspect.ratio=1) + scale_fill_distiller(
+    name="% of births in \nhealthcare facilities", 
+    palette = "BuPu", breaks = pretty_breaks(n = 5))+
+  labs(title="Kenya Births", subtitle = "Babies born in health care facilities by region.")
